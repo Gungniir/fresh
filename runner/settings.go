@@ -29,6 +29,7 @@ var settings = map[string]string{
 	"ignored":           "assets, tmp",
 	"build_delay":       "600",
 	"build_root":        ".",
+	"use_dlv":           "1",
 	"colors":            "1",
 	"log_color_main":    "cyan",
 	"log_color_build":   "yellow",
@@ -162,4 +163,8 @@ func normalizeDir(dir string) string {
 	}
 
 	return wd
+}
+
+func isDelve() bool {
+	return settings["use_dlv"] == "1"
 }

@@ -10,7 +10,13 @@ import (
 func build() (string, bool) {
 	buildLog("Building...")
 
-	cmd := exec.Command("go", "build", "-o", buildPath(), buildRoot())
+	var cmd *exec.Cmd
+	if isDelve() {
+		runnerLog("... with info for delve")
+		cmd = exec.Command("go", "build", "-gcflags", "all=-N -l", "-o", buildPath(), buildRoot())
+	} else {
+		cmd = exec.Command("go", "build", "-o", buildPath(), buildRoot())
+	}
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {

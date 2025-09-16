@@ -10,7 +10,23 @@ import (
 func run() bool {
 	runnerLog("Running...")
 
-	cmd := exec.Command(buildPath())
+	var cmd *exec.Cmd
+	if isDelve() {
+		runnerLog("... using delve")
+		cmd = exec.Command(
+			"dlv",
+			"--listen=:2345",
+			"--headless=true",
+			"--accept-multiclient",
+			"--api-version=2",
+			"--log",
+			"exec",
+			buildPath(),
+		)
+	} else {
+		cmd = exec.Command(buildPath())
+	}
+
 	cmd.Dir = workDir()
 
 	runnerLog("Set workdir to " + workDir())
@@ -30,8 +46,20 @@ func run() bool {
 		fatal(err)
 	}
 
+	runnerLog("Process started PID %d", cmd.Process.Pid)
+
 	go io.Copy(appLogWriter{}, stderr)
 	go io.Copy(appLogWriter{}, stdout)
+
+	waitChannel := make(chan bool)
+
+	go func() {
+		defer close(waitChannel)
+
+		_ = cmd.Wait()
+		runnerLog("Process exited PID %d", cmd.Process.Pid)
+		waitChannel <- true
+	}()
 
 	go func() {
 		<-stopChannel
@@ -42,18 +70,8 @@ func run() bool {
 			runnerLog("Failed to send sigterm to PID %d", pid)
 		}
 
-		waitChannel := make(chan bool)
-
-		go func() {
-			defer close(waitChannel)
-
-			_ = cmd.Wait()
-			waitChannel <- true
-		}()
-
 		select {
 		case <-waitChannel:
-			runnerLog("Process exited PID %d", pid)
 		case <-time.After(time.Second * 3):
 			runnerLog("Timed out waiting for process to exit PID %d", pid)
 			_ = cmd.Process.Kill()
