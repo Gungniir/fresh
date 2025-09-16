@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/lukasholzer/go-glob"
 )
 
 func initFolders() {
@@ -29,8 +31,19 @@ func isIgnoredFolder(path string) bool {
 		return false
 	}
 
-	for _, e := range strings.Split(settings["ignored"], ",") {
-		if strings.TrimSpace(e) == paths[0] {
+	for _, pattern := range strings.Split(settings["ignored"], ",") {
+		pattern = strings.TrimSpace(pattern)
+		if strings.HasPrefix(path, pattern) {
+			return true
+		}
+
+		globPattern, err := glob.Parse(pattern)
+		if err != nil {
+			watcherLog("Error parsing ignored pattern: %s, %v", pattern, err)
+			continue
+		}
+
+		if glob.Match(globPattern, path) {
 			return true
 		}
 	}
