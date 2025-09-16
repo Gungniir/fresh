@@ -52,57 +52,65 @@ func TestShouldRebuild(t *testing.T) {
 }
 
 func TestIsIgnoredFolder(t *testing.T) {
-	settings["ignored"] = "assets, tmp, **/build, docker, docker/**"
-
 	tests := []struct {
 		name     string
+		pattern  string
 		dir      string
 		expected bool
 	}{
 		{
 			"assets",
 			"assets",
+			"assets",
 			true,
 		},
 		{
 			"assets node_modules",
+			"assets",
 			"assets/node_modules",
 			true,
 		},
 		{
 			"tmp",
 			"tmp",
+			"tmp",
 			true,
 		},
 		{
 			"tmp pid",
+			"tmp",
 			"tmp/pid",
 			true,
 		},
 		{
 			"app controllers",
+			"tmp",
 			"app/controllers",
 			false,
 		},
 		{
 			"... build",
-			"authorization-service/build",
+			"**/build",
+			"authorization-service/lala/build",
 			true,
 		},
 		{
 			"docker **",
-			"docker/build",
+			"docker/**",
+			"docker/build/lala",
 			true,
 		},
 		{
-			"docker",
-			"docker",
+			"* docker",
+			"*/docker",
+			"authorization-service/docker",
 			true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			settings["ignored"] = tt.pattern
 			actual := isIgnoredFolder(tt.dir)
 
 			assert.Equal(t, tt.expected, actual)
