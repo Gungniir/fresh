@@ -9,6 +9,9 @@ func run() bool {
 	runnerLog("Running...")
 
 	cmd := exec.Command(buildPath())
+	cmd.Dir = workDir()
+
+	runnerLog("Set workdir to " + workDir())
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {

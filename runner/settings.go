@@ -20,6 +20,7 @@ const (
 var settings = map[string]string{
 	"config_path":       "./runner.conf",
 	"root":              ".",
+	"workdir":           ".",
 	"tmp_path":          "./tmp",
 	"build_name":        "runner-build",
 	"build_log":         "runner-build-errors.log",
@@ -119,6 +120,19 @@ func buildRoot() string {
 
 func tmpPath() string {
 	return settings["tmp_path"]
+}
+
+func workDir() string {
+	if strings.HasPrefix(settings["workdir"], "/") {
+		return filepath.Clean(settings["workdir"])
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	return filepath.Clean(filepath.Join(wd, settings["workdir"]))
 }
 
 func buildName() string {
