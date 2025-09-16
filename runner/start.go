@@ -9,13 +9,14 @@ import (
 )
 
 var (
-	startChannel chan string
-	stopChannel  chan bool
-	mainLog      logFunc
-	watcherLog   logFunc
-	runnerLog    logFunc
-	buildLog     logFunc
-	appLog       logFunc
+	startChannel   chan string
+	stopChannel    chan bool
+	stoppedChannel chan bool
+	mainLog        logFunc
+	watcherLog     logFunc
+	runnerLog      logFunc
+	buildLog       logFunc
+	appLog         logFunc
 )
 
 func flushEvents() {
@@ -70,6 +71,7 @@ func start() {
 			if !buildFailed {
 				if started {
 					stopChannel <- true
+					<-stoppedChannel
 				}
 				run()
 			}
@@ -83,6 +85,7 @@ func start() {
 func init() {
 	startChannel = make(chan string, 1000)
 	stopChannel = make(chan bool)
+	stoppedChannel = make(chan bool)
 }
 
 func initLogFuncs() {

@@ -115,24 +115,15 @@ func root() string {
 }
 
 func buildRoot() string {
-	return settings["build_root"]
+	return normalizeDir(settings["build_root"])
 }
 
 func tmpPath() string {
-	return settings["tmp_path"]
+	return normalizeDir(settings["tmp_path"])
 }
 
 func workDir() string {
-	if strings.HasPrefix(settings["workdir"], "/") {
-		return filepath.Clean(settings["workdir"])
-	}
-
-	wd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	return filepath.Clean(filepath.Join(wd, settings["workdir"]))
+	return normalizeDir(settings["workdir"])
 }
 
 func buildName() string {
@@ -162,4 +153,13 @@ func buildDelay() time.Duration {
 	value, _ := strconv.Atoi(settings["build_delay"])
 
 	return time.Duration(value)
+}
+
+func normalizeDir(dir string) string {
+	wd, err := filepath.Abs(dir)
+	if err != nil {
+		panic(err)
+	}
+
+	return wd
 }

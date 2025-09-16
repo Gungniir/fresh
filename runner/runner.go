@@ -3,6 +3,8 @@ package runner
 import (
 	"io"
 	"os/exec"
+	"syscall"
+	"time"
 )
 
 func run() bool {
@@ -34,8 +36,30 @@ func run() bool {
 	go func() {
 		<-stopChannel
 		pid := cmd.Process.Pid
-		runnerLog("Killing PID %d", pid)
-		cmd.Process.Kill()
+		runnerLog("Send sigterm to PID %d", pid)
+		err = cmd.Process.Signal(syscall.SIGTERM)
+		if err != nil {
+			runnerLog("Failed to send sigterm to PID %d", pid)
+		}
+
+		waitChannel := make(chan bool)
+
+		go func() {
+			defer close(waitChannel)
+
+			_ = cmd.Wait()
+			waitChannel <- true
+		}()
+
+		select {
+		case <-waitChannel:
+			runnerLog("Process exited PID %d", pid)
+		case <-time.After(time.Second * 3):
+			runnerLog("Timed out waiting for process to exit PID %d", pid)
+			_ = cmd.Process.Kill()
+		}
+
+		stoppedChannel <- true
 	}()
 
 	return true
