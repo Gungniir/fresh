@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func run() bool {
+func _run(exitCh chan<- bool) *exec.Cmd {
 	runnerLog("Running...")
 
 	var cmd *exec.Cmd
@@ -19,7 +19,6 @@ func run() bool {
 			"--headless=true",
 			"--accept-multiclient",
 			"--api-version=2",
-			"--log",
 			"exec",
 			buildPath(),
 		)
@@ -51,33 +50,51 @@ func run() bool {
 	go io.Copy(appLogWriter{}, stderr)
 	go io.Copy(appLogWriter{}, stdout)
 
-	waitChannel := make(chan bool)
-
 	go func() {
-		defer close(waitChannel)
-
 		_ = cmd.Wait()
 		runnerLog("Process exited PID %d", cmd.Process.Pid)
-		waitChannel <- true
+		exitCh <- true
 	}()
 
+	return cmd
+}
+
+func _stop(cmd *exec.Cmd, exited <-chan bool) {
+	pid := cmd.Process.Pid
+	runnerLog("Send sigterm to PID %d", pid)
+	err := cmd.Process.Signal(syscall.SIGTERM)
+	if err != nil {
+		runnerLog("Failed to send sigterm to PID %d", pid)
+	}
+
+	select {
+	case <-exited:
+	case <-time.After(time.Second * 3):
+		runnerLog("Timed out waiting for process to exit PID %d", pid)
+		_ = cmd.Process.Kill()
+	}
+}
+
+func run() bool {
+	exitCh := make(chan bool)
+
+	cmd := _run(exitCh)
+
 	go func() {
-		<-stopChannel
-		pid := cmd.Process.Pid
-		runnerLog("Send sigterm to PID %d", pid)
-		err = cmd.Process.Signal(syscall.SIGTERM)
-		if err != nil {
-			runnerLog("Failed to send sigterm to PID %d", pid)
-		}
+		defer close(exitCh)
 
-		select {
-		case <-waitChannel:
-		case <-time.After(time.Second * 3):
-			runnerLog("Timed out waiting for process to exit PID %d", pid)
-			_ = cmd.Process.Kill()
+		for {
+			select {
+			case <-exitCh:
+				runnerLog("Restart in 1 second...")
+				time.Sleep(time.Second)
+				cmd = _run(exitCh)
+			case <-stopChannel:
+				_stop(cmd, exitCh)
+				stoppedChannel <- true
+				return
+			}
 		}
-
-		stoppedChannel <- true
 	}()
 
 	return true

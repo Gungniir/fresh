@@ -12,7 +12,7 @@ func build() (string, bool) {
 
 	var cmd *exec.Cmd
 	if isDelve() {
-		runnerLog("... with info for delve")
+		buildLog("... with info for delve")
 		cmd = exec.Command("go", "build", "-gcflags", "all=-N -l", "-o", buildPath(), buildRoot())
 	} else {
 		cmd = exec.Command("go", "build", "-o", buildPath(), buildRoot())
