@@ -27,6 +27,7 @@ var settings = map[string]string{
 	"no_rebuild_ext":    ".tpl, .tmpl, .html",
 	"ignored":           "assets, tmp",
 	"build_delay":       "600",
+	"build_root":        ".",
 	"colors":            "1",
 	"log_color_main":    "cyan",
 	"log_color_build":   "yellow",
@@ -110,6 +111,10 @@ func getenv(key, defaultValue string) string {
 
 func root() string {
 	return settings["root"]
+}
+
+func buildRoot() string {
+	return settings["build_root"]
 }
 
 func tmpPath() string {

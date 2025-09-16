@@ -52,7 +52,7 @@ func TestShouldRebuild(t *testing.T) {
 }
 
 func TestIsIgnoredFolder(t *testing.T) {
-	settings["ignored"] = "assets, tmp, **/build"
+	settings["ignored"] = "assets, tmp, **/build, docker, docker/**"
 
 	tests := []struct {
 		name     string
@@ -87,6 +87,16 @@ func TestIsIgnoredFolder(t *testing.T) {
 		{
 			"... build",
 			"authorization-service/build",
+			true,
+		},
+		{
+			"docker **",
+			"docker/build",
+			true,
+		},
+		{
+			"docker",
+			"docker",
 			true,
 		},
 	}
