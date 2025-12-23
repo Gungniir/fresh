@@ -68,7 +68,10 @@ var colors = map[string]string{
 
 func logColor(logName string) string {
 	settingsKey := fmt.Sprintf("log_color_%s", logName)
-	colorName := settings[settingsKey]
+	colorName, ok := settings[settingsKey]
+	if !ok {
+		colorName = "bright_black"
+	}
 
 	return colors[colorName]
 }
@@ -102,6 +105,7 @@ func loadRunnerConfigSettings() {
 }
 
 func initSettings() {
+	bootstrapLog = newLogFunc("bootstrap")
 	loadEnvSettings()
 	loadRunnerConfigSettings()
 	mainLog("Loaded config: %v", settings)

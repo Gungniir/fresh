@@ -12,6 +12,7 @@ var (
 	startChannel   chan string
 	stopChannel    chan bool
 	stoppedChannel chan bool
+	bootstrapLog   logFunc
 	mainLog        logFunc
 	watcherLog     logFunc
 	runnerLog      logFunc
