@@ -90,14 +90,14 @@ func loadRunnerConfigSettings() {
 		return
 	}
 
-	mainLog("Loading settings from %s", configPath())
+	bootstrapLog("Loading settings from %s", configPath())
 	sections, err := config.ParseFile(configPath(), mainSettingsSection)
 	if err != nil {
-		mainLog("Failed to load settings %s", err.Error())
+		bootstrapLog("Failed to load settings %s", err.Error())
 		return
 	}
 
-	mainLog("Settings loaded %v", sections)
+	bootstrapLog("Settings loaded %v", sections)
 
 	for key, value := range sections[mainSettingsSection] {
 		settings[key] = value
@@ -106,9 +106,10 @@ func loadRunnerConfigSettings() {
 
 func initSettings() {
 	bootstrapLog = newLogFunc("bootstrap")
+
 	loadEnvSettings()
 	loadRunnerConfigSettings()
-	mainLog("Loaded config: %v", settings)
+	bootstrapLog("Loaded config: %v", settings)
 }
 
 func getenv(key, defaultValue string) string {
