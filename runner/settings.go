@@ -87,12 +87,14 @@ func loadRunnerConfigSettings() {
 		return
 	}
 
-	logger.Printf("Loading settings from %s", configPath())
+	mainLog("Loading settings from %s", configPath())
 	sections, err := config.ParseFile(configPath(), mainSettingsSection)
 	if err != nil {
-		logger.Printf("Failed to load settings %s", err.Error())
+		mainLog("Failed to load settings %s", err.Error())
 		return
 	}
+
+	mainLog("Settings loaded %v", sections)
 
 	for key, value := range sections[mainSettingsSection] {
 		settings[key] = value
@@ -102,7 +104,7 @@ func loadRunnerConfigSettings() {
 func initSettings() {
 	loadEnvSettings()
 	loadRunnerConfigSettings()
-	fmt.Printf("Loaded config: %v", settings)
+	mainLog("Loaded config: %v", settings)
 }
 
 func getenv(key, defaultValue string) string {
